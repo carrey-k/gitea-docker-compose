@@ -1,0 +1,53 @@
+version: "3"
+
+networks:
+  gitea:
+    external: false
+
+volumes:
+  gitea:
+    driver: local
+  mysql:
+    driver: local
+
+services:
+  server:
+    image: gitea/gitea:${GITEA_VERSION}
+    container_name: gitea-app
+    environment:
+      - APP_NAME=${APP_NAME}
+      - RUN_MODE=${RUN_MODE}
+      - USER_UID=${USER_UID}
+      - USER_GID=${USER_GID}
+      - DB_TYPE=${DB_TYPE}
+      - DB_HOST=db:${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWD=${DB_PASSWD}
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "${GITEA_WEB_PORT}:3000"
+      - "${GITEA_SSH_PORT}:22"
+    depends_on:
+      - db
+ 
+  db:
+    image: mysql:${DB_VERSION}
+    container_name: gitea-db-mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWD}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWD}
+      - MYSQL_DATABASE=${DB_NAME}
+    networks:
+      - gitea
+    volumes:
+      # - ./volumes/mysql:/var/lib/mysql
+      - mysql:/var/lib/mysql
